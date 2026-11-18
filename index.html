@@ -99,6 +99,79 @@ document.getElementById("authForm").onsubmit = (e) => {
   message.textContent =
     "画面の準備ができました。認証機能は次に接続します。";
 };
+</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://xhbvexchwqqlsgntkrfl.supabase.co";
+const SUPABASE_KEY = "sb_publishable_0D-jzoXVU_uhbu_uVtA40A_9QjxOVOo";
+
+const client = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+document.getElementById("authForm").onsubmit =
+async (e) => {
+  e.preventDefault();
+
+  const email =
+    document.getElementById("email").value.trim();
+  const password =
+    document.getElementById("password").value;
+
+  const isSignup =
+    document.getElementById("title").textContent
+      === "新規会員登録";
+
+  const message =
+    document.getElementById("message");
+  const button =
+    document.getElementById("submitButton");
+
+  button.disabled = true;
+  message.textContent = "処理中...";
+
+  try {
+    const result = isSignup
+      ? await client.auth.signUp({
+          email, password
+        })
+      : await client.auth.signInWithPassword({
+          email, password
+        });
+
+    if (result.error) throw result.error;
+
+    if (result.data.session) {
+      showLoggedIn();
+    } else {
+      message.textContent =
+        "確認メールを送信しました。メールを確認してください。";
+    }
+  } catch (error) {
+    message.textContent =
+      "認証に失敗しました: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+};
+
+function showLoggedIn() {
+  document.querySelector(".card").innerHTML = `
+    <h2>ログイン成功！</h2>
+    <p>ChatAppへようこそ</p>
+    <button id="logoutButton">ログアウト</button>
+  `;
+
+  document.getElementById("logoutButton").onclick =
+    async () => {
+      await client.auth.signOut();
+      location.reload();
+    };
+}
+
+client.auth.getSession().then(({data}) => {
+  if (data.session) showLoggedIn();
+});
 </script>
 </body>
 </html>
